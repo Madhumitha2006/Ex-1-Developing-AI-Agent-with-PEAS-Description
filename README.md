@@ -1,7 +1,7 @@
 # Ex-1-Developing-AI-Agent-with-PEAS-Description
-### Name:
+### Name: MADHU MITHA V
 
-### Register Number:
+### Register Number: 2305002013
 
 ### Aim:
 To find the PEAS description for the given AI problem and develop an AI agent.
@@ -35,87 +35,162 @@ It’s a framework used to define the task environment for an AI agent clearly.
 5. Personal assistant (like Siri or Alexa)
 ```
 
-### VacuumCleanerAgent
+### Chess playing agent
 ### Algorithm:
-Step 1: Initialize:
+Step 1: Initialize Board
+     
+     Represent the chessboard as an 8×8 list (2D array).
+     
+     Place white pieces (P, N, etc.) and black pieces (p, n, etc.) in their starting positions.
 
-Set agent’s location to A
+Step 2: Display Board
 
-Set environment dirt status for locations A and B (True = dirty, False = clean)
+     Print the board row by row for visualization.
+     
+Step 3: Define Move Rules (Simplified)
 
-Step 2 :Repeat until all locations are clean (no dirt):
-a. Sense if current location has dirt
-b. If current location has dirt:
-- Suck dirt (set dirt status at current location to False)
-c. Else:
-- If current location is A, move right to location B
-- Else if current location is B, move left to location A
-d. Print the agent’s current location and dirt status (optional for debugging)
+Pawn moves:
+    
+     White pawns (P) move one step upward if the square is empty.
+     
+     Black pawns (p) move one step downward if the square is empty.
 
-Step 3: Stop when all locations are clean
+Knight moves:
 
-Step 4: Print total steps taken (optional)
+     Knights (N for white, n for black) move in “L” shapes (2+1 steps).
+     
+     They can capture opponent’s pieces.
 
+Step 4: Generate Moves
+
+     For each piece of the current player (white or black), check valid moves using pawn and knight rules.
+     
+     Collect all possible moves in a list.
+
+Step 5: Choose Move
+
+     The agent randomly selects one move from the list of valid moves.
+
+Step 6: Update Board
+
+     Move the piece from the start position to the destination.
+     
+     Replace the old square with . (empty).
+
+Step 7: Repeat Turns
+
+     Alternate between White and Black agents.
+     
+     After each move, print the updated board.
+
+Step 8: End Game
+
+     Stop after a fixed number of moves (e.g., 10 half-moves = 5 moves each).
+     
+     Print “Game Over”.
 ### Program:
 ```
-class VacuumCleanerAgent:
-    def __init__(self):
-        # Initialize the agent's state (location and dirt status)
-        self.location = "A"  # Initial location (can be "A" or "B")
-        self.dirt_status = {"A": False, "B": False}  # Initial dirt status (False means no dirt)
+import random
 
-    def move_left(self):
-        # Move the agent to the left if possible
-        if self.location == "B":
-            self.location = "A"
+# --- Chess Board Representation ---
+def init_board():
+    # 8x8 board with simple symbols
+    board = [
+        ["r","n","b","q","k","b","n","r"],
+        ["p","p","p","p","p","p","p","p"],
+        [".",".",".",".",".",".",".","."],
+        [".",".",".",".",".",".",".","."],
+        [".",".",".",".",".",".",".","."],
+        [".",".",".",".",".",".",".","."],
+        ["P","P","P","P","P","P","P","P"],
+        ["R","N","B","Q","K","B","N","R"]
+    ]
+    return board
 
-    def move_right(self):
-        # Move the agent to the right if possible
-        if self.location == "A":
-            self.location = "B"
+def print_board(board):
+    print("\n".join([" ".join(row) for row in board]))
+    print()
 
-    def suck_dirt(self):
-        # Suck dirt in the current location if there is dirt
-        if self.dirt_status[self.location]:
-            self.dirt_status[self.location] = False
-            print(f"Sucked dirt in location {self.location}")
+# --- Move Generation (very simplified) ---
+def generate_moves(board, color):
+    moves = []
+    directions = {"P": -1, "p": 1}  # White moves up, Black down
+    knight_moves = [(2,1),(2,-1),(-2,1),(-2,-1),(1,2),(1,-2),(-1,2),(-1,-2)]
+    
+    for i in range(8):
+        for j in range(8):
+            piece = board[i][j]
+            if color == "white" and piece == "P":
+                if i+directions["P"] >= 0 and board[i+directions["P"]][j] == ".":
+                    moves.append(((i,j),(i+directions["P"],j)))
+            elif color == "black" and piece == "p":
+                if i+directions["p"] < 8 and board[i+directions["p"]][j] == ".":
+                    moves.append(((i,j),(i+directions["p"],j)))
+            elif color == "white" and piece == "N":
+                for dx,dy in knight_moves:
+                    x,y = i+dx,j+dy
+                    if 0<=x<8 and 0<=y<8 and (board[x][y] == "." or board[x][y].islower()):
+                        moves.append(((i,j),(x,y)))
+            elif color == "black" and piece == "n":
+                for dx,dy in knight_moves:
+                    x,y = i+dx,j+dy
+                    if 0<=x<8 and 0<=y<8 and (board[x][y] == "." or board[x][y].isupper()):
+                        moves.append(((i,j),(x,y)))
+    return moves
 
-    def do_nothing(self):
-        # Do nothing
-        pass
+def make_move(board, move):
+    (x1,y1),(x2,y2) = move
+    piece = board[x1][y1]
+    board[x2][y2] = piece
+    board[x1][y1] = "."
 
-    def perform_action(self, action):
-        # Perform the specified action
-        if action == "left":
-            self.move_left()
-        elif action == "right":
-            self.move_right()
-        elif action == "suck":
-            self.suck_dirt()
-        elif action == "nothing":
-            self.do_nothing()
+# --- Simple Agent (Random move) ---
+class ChessAgent:
+    def __init__(self, color):
+        self.color = color
+    
+    def choose_move(self, board):
+        moves = generate_moves(board, self.color)
+        if not moves:
+            return None
+        return random.choice(moves)
+
+# --- Play a Demo Game ---
+def play_game():
+    board = init_board()
+    agent_white = ChessAgent("white")
+    agent_black = ChessAgent("black")
+
+    print("Initial Board:")
+    print_board(board)
+
+    for turn in range(10):  # 10 moves total
+        if turn % 2 == 0:
+            move = agent_white.choose_move(board)
+            if move: make_move(board, move)
+            print("White moves")
         else:
-            print("Invalid action")
+            move = agent_black.choose_move(board)
+            if move: make_move(board, move)
+            print("Black moves")
+        print_board(board)
 
-    def print_status(self):
-        # Print the current status of the agent
-        print(f"Location: {self.location}, Dirt Status: {self.dirt_status}")
+    print("Game Over (10 turns).")
 
-# Example usage:
-agent = VacuumCleanerAgent()
-
-
-# Move the agent, suck dirt, and do nothing
-
-agent.perform_action("left")
-agent.print_status()
-agent.perform_action("suck")
-agent.print_status()
-agent.perform_action("nothing")
-agent.print_status()
+# Run demo
+play_game()
 ```
-### Sample Output:
 
-425810495-d1198ba7-da19-413b-9907-4844afae627f
+### Output:
+<img width="204" height="529" alt="image" src="https://github.com/user-attachments/assets/7033f807-fb3f-4839-8bf4-5a8fdace4eff" />
+<img width="201" height="532" alt="image" src="https://github.com/user-attachments/assets/45283190-7c9f-486f-8674-b062ae128703" />
+<img width="182" height="533" alt="Screenshot 2025-09-22 160504" src="https://github.com/user-attachments/assets/e03407e9-0c67-4fbf-8eab-7ae3baaa148e" />
+<img width="193" height="538" alt="Screenshot 2025-09-22 160521" src="https://github.com/user-attachments/assets/38fcc858-6a6c-42cf-91ac-cb76c22694be" />
+<img width="248" height="333" alt="Screenshot 2025-09-22 160657" src="https://github.com/user-attachments/assets/76a4d4e8-9fd8-4614-a7e9-10d9ffa30d35" />
+<img width="186" height="537" alt="Screenshot 2025-09-22 160650" src="https://github.com/user-attachments/assets/1fafdfb3-c118-4757-a17f-bf7c69c7a7c7" />
+<img width="192" height="520" alt="Screenshot 2025-09-22 160609" src="https://github.com/user-attachments/assets/72a50e1b-93df-4948-86dc-1e69e6581395" />
+<img width="192" height="520" alt="Screenshot 2025-09-22 160609" src="https://github.com/user-attachments/assets/ac37acc8-5fe8-4760-896f-7526cee19c4e" />
 
 ### Result:
+The program successfully simulates a simplified chess game where two AI agents make random but valid pawn and knight moves alternately.
+It demonstrates how an AI agent can perceive the board, choose an action, and update the environment accordingly.
